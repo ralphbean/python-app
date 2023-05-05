@@ -205,6 +205,7 @@ spec:
             if [ "${EXIT_CODE}" != 0 ] ; then
               exit "${EXIT_CODE}"
             fi
+            sed -i 's/Hello/Goodbye/' *.py
             printf "%s" "${RESULT_SHA}" > "$(results.commit.path)"
             printf "%s" "${PARAM_URL}" > "$(results.url.path)"
         workspaces:

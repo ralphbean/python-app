@@ -436,7 +436,7 @@ spec:
               name: upload-sarif
               script: |
                 #!/usr/bin/env bash
-                set -euo pipefail
+                set -xeuo pipefail
 
                 UPLOAD_FILE=sast_snyk_check_out.json
 

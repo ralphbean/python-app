@@ -427,6 +427,28 @@ spec:
                   name: snyk-secret
                   readOnly: true
               workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
+            - env:
+                - name: OCI_SUBJECT
+                  value: $(params.image-url)
+                - name: DIGEST
+                  value: $(params.image-digest)
+              image: quay.io/redhat-user-workloads/ralphjbean-tenant/oras-container/oras-container:a5095f1a931c7cff962309e0bc61c8a8ba7a1426
+              name: upload-sarif
+              script: |
+                #!/usr/bin/env bash
+                set -euo pipefail
+
+                UPLOAD_FILE=sast_snyk_check_out.json
+
+                SUFFIX=sarif
+                MEDIA_TYPE=application/sarif+json
+
+                IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
+                REPO="${REPO[0]}"
+                DIGEST=$(echo "${DIGEST}" | tr : -)
+
+                oras push --no-tty "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
+              workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
           volumes:
             - name: snyk-secret
               secret:

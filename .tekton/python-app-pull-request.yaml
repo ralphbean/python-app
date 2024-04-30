@@ -432,7 +432,8 @@ spec:
                   value: $(params.image-url)
                 - name: DIGEST
                   value: $(params.image-digest)
-              image: quay.io/redhat-user-workloads/ralphjbean-tenant/oras-container/oras-container:a5095f1a931c7cff962309e0bc61c8a8ba7a1426
+              #image: quay.io/redhat-user-workloads/ralphjbean-tenant/oras-container/oras-container:a5095f1a931c7cff962309e0bc61c8a8ba7a1426
+              image: quay.io/rbean/testing:hacbs-test
               name: upload-sarif
               script: |
                 #!/usr/bin/env bash

@@ -422,13 +422,6 @@ spec:
                   REPO="${REPO[0]}"
                   DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
 
-                  echo "---"
-                  ls $HOME
-                  echo "---"
-                  find $HOME
-                  echo "---"
-                  cat $HOME/.docker/config.json
-
                   oras push --no-tty --registry-config "$HOME/.docker/config.json" "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
 
                 # When the test is skipped, the "SNYK_EXIT_CODE" is 3 and it can also be 3 in some other situation

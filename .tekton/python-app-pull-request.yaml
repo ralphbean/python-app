@@ -422,7 +422,7 @@ spec:
                   REPO="${REPO[0]}"
                   DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
 
-                  oras push --no-tty "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
+                  oras push --no-tty --registry-config /tekton/creds-secrets/python-app/.dockerconfigjson "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
 
                 # When the test is skipped, the "SNYK_EXIT_CODE" is 3 and it can also be 3 in some other situation
                 elif [[ "$test_not_skipped" -eq 0 ]]; then

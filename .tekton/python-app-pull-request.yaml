@@ -377,7 +377,8 @@ spec:
                   value: $(params.SNYK_SECRET)
                 - name: ARGS
                   value: $(params.ARGS)
-              image: quay.io/redhat-appstudio/hacbs-test:v1.4.0@sha256:54d49b37c9a2e280d42961a57e4f7a16c171d6b065559f1329b548db85300bea
+              #image: quay.io/redhat-appstudio/hacbs-test:v1.4.0@sha256:54d49b37c9a2e280d42961a57e4f7a16c171d6b065559f1329b548db85300bea
+              image: quay.io/rbean/testing:hacbs-test
               name: sast-snyk-check
               script: |
                 #!/usr/bin/env bash
@@ -411,6 +412,18 @@ spec:
                   TEST_OUTPUT=
                   parse_test_output $(context.task.name) sarif sast_snyk_check_out.json  || true
 
+                  UPLOAD_FILE=sast_snyk_check_out.json
+                  OCI_SUBJECT=IMAGE_URL
+
+                  SUFFIX=sarif
+                  MEDIA_TYPE=application/sarif+json
+
+                  IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
+                  REPO="${REPO[0]}"
+                  DIGEST=$(echo "${DIGEST}" | tr : -)
+
+                  oras push --no-tty "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
+
                 # When the test is skipped, the "SNYK_EXIT_CODE" is 3 and it can also be 3 in some other situation
                 elif [[ "$test_not_skipped" -eq 0 ]]; then
                   note="Task $(context.task.name) success: Snyk code test found zero supported files."
@@ -426,29 +439,6 @@ spec:
                 - mountPath: /etc/secrets
                   name: snyk-secret
                   readOnly: true
-              workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
-            - env:
-                - name: OCI_SUBJECT
-                  value: $(params.image-url)
-                - name: DIGEST
-                  value: $(params.image-digest)
-              #image: quay.io/redhat-user-workloads/ralphjbean-tenant/oras-container/oras-container:a5095f1a931c7cff962309e0bc61c8a8ba7a1426
-              image: quay.io/rbean/testing:hacbs-test
-              name: upload-sarif
-              script: |
-                #!/usr/bin/env bash
-                set -xeuo pipefail
-
-                UPLOAD_FILE=sast_snyk_check_out.json
-
-                SUFFIX=sarif
-                MEDIA_TYPE=application/sarif+json
-
-                IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
-                REPO="${REPO[0]}"
-                DIGEST=$(echo "${DIGEST}" | tr : -)
-
-                oras push --no-tty "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
               workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
           volumes:
             - name: snyk-secret

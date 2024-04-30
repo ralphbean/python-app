@@ -427,7 +427,7 @@ spec:
                   echo "---"
                   find $HOME
                   echo "---"
-                  cat $HOME/.docker/config.json
+                  cat $HOME/.docker/config.json | jq '.auths | keys'
 
                   oras push --no-tty --registry-config "$HOME/.docker/config.json" "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
 

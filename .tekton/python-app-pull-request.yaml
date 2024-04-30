@@ -413,14 +413,14 @@ spec:
                   parse_test_output $(context.task.name) sarif sast_snyk_check_out.json  || true
 
                   UPLOAD_FILE=sast_snyk_check_out.json
-                  OCI_SUBJECT=IMAGE_URL
+                  OCI_SUBJECT=$IMAGE_URL
 
                   SUFFIX=sarif
                   MEDIA_TYPE=application/sarif+json
 
                   IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
                   REPO="${REPO[0]}"
-                  DIGEST=$(echo "${DIGEST}" | tr : -)
+                  DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
 
                   oras push --no-tty "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
 

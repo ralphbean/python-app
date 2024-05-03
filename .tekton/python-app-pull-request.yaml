@@ -429,7 +429,7 @@ spec:
                   value: $(params.image-digest)
               # TODO - replace this with oras image
               image: quay.io/rbean/testing:hacbs-test
-              name: sast-snyk-check
+              name: upload-sarif
               script: |
                 #!/usr/bin/env bash
 

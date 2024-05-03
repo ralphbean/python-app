@@ -432,6 +432,9 @@ spec:
                   cat $HOME/.docker/config.json
                   echo "---"
 
+                  echo "${REPO}:${DIGEST}.${SUFFIX}"
+                  echo "${UPLOAD_FILE}:${MEDIA_TYPE}"
+                  echo "---"
 
                   oras push --no-tty --registry-config "$HOME/.docker/config.json" "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
 

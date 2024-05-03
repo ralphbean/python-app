@@ -377,7 +377,6 @@ spec:
               name: sast-snyk-check
               script: |
                 #!/usr/bin/env bash
-                set -euo pipefail
                 . /utils.sh
                 trap 'handle_error $(results.TEST_OUTPUT.path)' EXIT
 
@@ -433,7 +432,6 @@ spec:
               name: sast-snyk-check
               script: |
                 #!/usr/bin/env bash
-                set -euo pipefail
 
                 upload_with_retry() {
 

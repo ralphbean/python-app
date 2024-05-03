@@ -430,6 +430,7 @@ spec:
               # TODO - replace this with oras image
               image: quay.io/rbean/testing:hacbs-test
               name: upload-sarif
+              workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
               script: |
                 #!/usr/bin/env bash
 

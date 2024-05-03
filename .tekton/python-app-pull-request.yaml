@@ -369,16 +369,11 @@ spec:
               name: TEST_OUTPUT
           steps:
             - env:
-                - name: IMAGE_URL
-                  value: $(params.image-url)
-                - name: IMAGE_DIGEST
-                  value: $(params.image-digest)
                 - name: SNYK_SECRET
                   value: $(params.SNYK_SECRET)
                 - name: ARGS
                   value: $(params.ARGS)
-              #image: quay.io/redhat-appstudio/hacbs-test:v1.4.0@sha256:54d49b37c9a2e280d42961a57e4f7a16c171d6b065559f1329b548db85300bea
-              image: quay.io/rbean/testing:hacbs-test
+              image: quay.io/redhat-appstudio/hacbs-test:v1.4.0@sha256:54d49b37c9a2e280d42961a57e4f7a16c171d6b065559f1329b548db85300bea
               name: sast-snyk-check
               script: |
                 #!/usr/bin/env bash
@@ -412,39 +407,6 @@ spec:
                   TEST_OUTPUT=
                   parse_test_output $(context.task.name) sarif sast_snyk_check_out.json  || true
 
-                  upload_with_retry() {
-
-                    status=-1
-                    max_try=8
-                    wait_sec=2
-
-                    for run in $(seq 1 $max_try); do
-                      status=0
-                      oras push --no-tty --registry-config "$HOME/.docker/config.json" "$@"
-                      status=$?
-                      if [ "$status" -eq 0 ]; then
-                        break
-                      fi
-                      sleep $wait_sec
-                    done
-                    if [ "$status" -ne 0 ]; then
-                      echo "Failed to upload $@ after ${max_try} tries" >&2
-                      cat err >&2
-                    fi
-                  }
-
-                  UPLOAD_FILE=sast_snyk_check_out.json
-                  OCI_SUBJECT=$IMAGE_URL
-
-                  SUFFIX=sarif
-                  MEDIA_TYPE=application/sarif+json
-
-                  IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
-                  REPO="${REPO[0]}"
-                  DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
-
-                  upload_with_retry "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
-
                 # When the test is skipped, the "SNYK_EXIT_CODE" is 3 and it can also be 3 in some other situation
                 elif [[ "$test_not_skipped" -eq 0 ]]; then
                   note="Task $(context.task.name) success: Snyk code test found zero supported files."
@@ -461,6 +423,51 @@ spec:
                   name: snyk-secret
                   readOnly: true
               workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
+            - env:
+                - name: IMAGE_URL
+                  value: $(params.image-url)
+                - name: IMAGE_DIGEST
+                  value: $(params.image-digest)
+              # TODO - replace this with oras image
+              image: quay.io/rbean/testing:hacbs-test
+              name: sast-snyk-check
+              script: |
+                #!/usr/bin/env bash
+                set -euo pipefail
+
+                upload_with_retry() {
+
+                  status=-1
+                  max_try=8
+                  wait_sec=2
+
+                  for run in $(seq 1 $max_try); do
+                    status=0
+                    oras push --no-tty --registry-config "$HOME/.docker/config.json" "$@"
+                    status=$?
+                    if [ "$status" -eq 0 ]; then
+                      break
+                    fi
+                    sleep $wait_sec
+                  done
+                  if [ "$status" -ne 0 ]; then
+                    echo "Failed to upload $@ after ${max_try} tries" >&2
+                    cat err >&2
+                  fi
+                }
+
+                UPLOAD_FILE=sast_snyk_check_out.json
+                OCI_SUBJECT=$IMAGE_URL
+
+                SUFFIX=sarif
+                MEDIA_TYPE=application/sarif+json
+
+                IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
+                REPO="${REPO[0]}"
+                DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
+
+                upload_with_retry "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
+
           volumes:
             - name: snyk-secret
               secret:

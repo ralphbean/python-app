@@ -427,33 +427,11 @@ spec:
                   value: $(params.image-url)
                 - name: IMAGE_DIGEST
                   value: $(params.image-digest)
-              image: quay.io/konflux-ci/oras:latest@sha256:a7241f49c4ebbeda4dd700db61f86714d7881200614e82b077abe39979eebdca
+              image: quay.io/konflux-ci/oras:latest@sha256:55cf304549225435958798c3be0377faf0a3ff89f3fbe03e45c3bb656ecaf02f
               name: upload
               workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
               script: |
                 #!/usr/bin/env bash
-
-                retry() {
-                  status=-1
-                  max_try=12
-                  wait_sec=2
-
-                  echo "Executing:  $@"
-
-                  for run in $(seq 1 $max_try); do
-                    status=0
-                    "$@"
-                    status=$?
-                    if [ "$status" -eq 0 ]; then
-                      break
-                    fi
-                    sleep $wait_sec
-                  done
-                  if [ "$status" -ne 0 ]; then
-                    echo "Failed to upload $@ after ${max_try} tries" >&2
-                    cat err >&2
-                  fi
-                }
 
                 UPLOAD_FILE=sast_snyk_check_out.json
                 OCI_SUBJECT=$IMAGE_URL
@@ -633,7 +611,7 @@ spec:
                   value: $(params.image-url)
                 - name: IMAGE_DIGEST
                   value: $(params.image-digest)
-              image: quay.io/konflux-ci/oras:latest@sha256:a7241f49c4ebbeda4dd700db61f86714d7881200614e82b077abe39979eebdca
+              image: quay.io/konflux-ci/oras:latest@sha256:55cf304549225435958798c3be0377faf0a3ff89f3fbe03e45c3bb656ecaf02f
               name: upload
               volumeMounts:
                 - mountPath: /work
@@ -641,29 +619,6 @@ spec:
               workingDir: /work
               script: |
                 #!/usr/bin/env bash
-
-                retry() {
-                  status=-1
-                  # This is _really_ flakey.
-                  max_try=12
-                  wait_sec=2
-
-                  echo "Executing: $@"
-
-                  for run in $(seq 1 $max_try); do
-                    status=0
-                    "$@"
-                    status=$?
-                    if [ "$status" -eq 0 ]; then
-                      break
-                    fi
-                    sleep $wait_sec
-                  done
-                  if [ "$status" -ne 0 ]; then
-                    echo "Failed to upload $@ after ${max_try} tries" >&2
-                    cat err >&2
-                  fi
-                }
 
                 OCI_SUBJECT=$IMAGE_URL
                 IFS=':' read -ra REPO <<< "$OCI_SUBJECT"

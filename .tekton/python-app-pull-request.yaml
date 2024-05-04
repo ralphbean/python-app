@@ -534,7 +534,7 @@ spec:
                 . /utils.sh
                 trap 'handle_error' EXIT
 
-                imagewithouttag=$(echo $IMAGE_URL | sed "s/\\(.*\\):.*/\\1/" | tr -d '\
+                imagewithouttag=$(echo $IMAGE_URL | sed "s/\(.*\):.*/\1/" | tr -d '\
                 ')
 
                 # strip new-line escape symbol from parameter and save it to variable
@@ -561,7 +561,7 @@ spec:
                     mkdir -p "$destination"
                     arch_imageanddigest=$(echo $imagewithouttag@$arch_sha)
 
-                    echo "Running \\"oc image extract\\" on image of arch $arch"
+                    echo "Running \"oc image extract\" on image of arch $arch"
                     oc image extract --registry-config ~/.docker/config.json $arch_imageanddigest --path="/:${destination}" --filter-by-os="linux/${arch}"
                     if [ $? -ne 0 ]; then
                       echo "Unable to extract image for arch $arch. Skipping ClamAV scan!"
@@ -569,39 +569,39 @@ spec:
                     fi
 
                     echo "Scanning image for arch $arch. This operation may take a while."
-                    clamscan $destination -ri --max-scansize=4095M --max-filesize=4095M \\
-                      --max-scantime=0 --max-files=0 --max-recursion=1000 --max-dir-recursion=20000 --max-embeddedpe=4095M \\
-                      --max-htmlnormalize=10M --max-htmlnotags=4095M --max-scriptnormalize=5M --max-ziptypercg=4095M \\
-                      --max-partitions=50000 --max-iconspe=100000 --max-rechwp3=20000 --pcre-match-limit=100000000 --pcre-recmatch-limit=2000000 \\
-                      --pcre-max-filesize=4095M --alert-exceeds-max=yes \\
-                      --alert-encrypted=yes --alert-encrypted-archive=yes --alert-encrypted-doc=yes --alert-macros=yes \\
-                      --alert-phishing-ssl=yes --alert-phishing-cloak=yes --alert-partition-intersection=yes \\
+                    clamscan $destination -ri --max-scansize=4095M --max-filesize=4095M \
+                      --max-scantime=0 --max-files=0 --max-recursion=1000 --max-dir-recursion=20000 --max-embeddedpe=4095M \
+                      --max-htmlnormalize=10M --max-htmlnotags=4095M --max-scriptnormalize=5M --max-ziptypercg=4095M \
+                      --max-partitions=50000 --max-iconspe=100000 --max-rechwp3=20000 --pcre-match-limit=100000000 --pcre-recmatch-limit=2000000 \
+                      --pcre-max-filesize=4095M --alert-exceeds-max=yes \
+                      --alert-encrypted=yes --alert-encrypted-archive=yes --alert-encrypted-doc=yes --alert-macros=yes \
+                      --alert-phishing-ssl=yes --alert-phishing-cloak=yes --alert-partition-intersection=yes \
                       | tee /tekton/home/clamscan-result-$arch.log || true
                     echo "Executed-on: Scan was executed on version - $(clamscan --version)" | tee -a /tekton/home/clamscan-result-$arch.log
 
-                    digests_processed+=("\\"$arch_sha\\"")
+                    digests_processed+=("\"$arch_sha\"")
 
                     if [[ -e "/tekton/home/clamscan-result-$arch.log" ]]; then
                       # file_suffix=$(basename "$file" | sed 's/clamscan-result-//;s/.log//')
                       # OPA/EC requires structured data input, add clamAV log into json
                       jq -Rs '{ output: . }' /tekton/home/clamscan-result-$arch.log > /tekton/home/clamscan-result-log-$arch.json
 
-                      EC_EXPERIMENTAL=1 ec test \\
-                        --namespace required_checks \\
-                        --policy /project/clamav/virus-check.rego \\
-                        -o json \\
+                      EC_EXPERIMENTAL=1 ec test \
+                        --namespace required_checks \
+                        --policy /project/clamav/virus-check.rego \
+                        -o json \
                         /tekton/home/clamscan-result-log-$arch.json || true
 
                       # workaround: due to a bug in ec-cli, we cannot generate json and appstudio output at the same time, running it again
-                      EC_EXPERIMENTAL=1 ec test \\
-                        --namespace required_checks \\
-                        --policy /project/clamav/virus-check.rego \\
-                        -o appstudio \\
+                      EC_EXPERIMENTAL=1 ec test \
+                        --namespace required_checks \
+                        --policy /project/clamav/virus-check.rego \
+                        -o appstudio \
                         /tekton/home/clamscan-result-log-$arch.json | tee /tekton/home/clamscan-ec-test-$arch.json || true
 
                       cat /tekton/home/clamscan-ec-test-$arch.json
                     fi
-                  done < <(echo "$image_manifests" | jq -r 'to_entries[] | "\\(.key) \\(.value)"')
+                  done < <(echo "$image_manifests" | jq -r 'to_entries[] | "\(.key) \(.value)"')
                 fi
 
                 jq -s -rce '
@@ -617,7 +617,7 @@ spec:
                     })' /tekton/home/clamscan-ec-test-*.json | tee $(results.TEST_OUTPUT.path)
 
                 digests_processed_string=$(IFS=,; echo "${digests_processed[*]}")
-                echo "${images_processed_template/\\[%s]/[$digests_processed_string]}" | tee $(results.IMAGES_PROCESSED.path)
+                echo "${images_processed_template/\[%s]/[$digests_processed_string]}" | tee $(results.IMAGES_PROCESSED.path)
               securityContext:
                 runAsUser: 1000
               volumeMounts:

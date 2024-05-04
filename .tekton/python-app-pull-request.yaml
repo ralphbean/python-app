@@ -445,7 +445,7 @@ spec:
 
                   status=-1
                   # This is _really_ flakey.
-                  max_try=50
+                  max_try=12
                   wait_sec=2
 
                   for run in $(seq 1 $max_try); do

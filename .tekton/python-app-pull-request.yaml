@@ -433,17 +433,16 @@ spec:
               script: |
                 #!/usr/bin/env bash
 
-                upload_with_retry() {
+                retry() {
                   status=-1
-                  # This is _really_ flakey.
                   max_try=12
                   wait_sec=2
 
-                  echo "Uploading $@"
+                  echo "Executing:  $@"
 
                   for run in $(seq 1 $max_try); do
                     status=0
-                    oras push --no-tty --registry-config "$HOME/.docker/config.json" "$@"
+                    "$@"
                     status=$?
                     if [ "$status" -eq 0 ]; then
                       break
@@ -466,7 +465,7 @@ spec:
                 REPO="${REPO[0]}"
                 DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
 
-                upload_with_retry "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
+                retry oras push --no-tty --registry-config "$HOME/.docker/config.json" "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
 
           volumes:
             - name: snyk-secret
@@ -639,21 +638,21 @@ spec:
               volumeMounts:
                 - mountPath: /work
                   name: work
-              workingDir: /work/log
+              workingDir: /work
               script: |
                 #!/usr/bin/env bash
 
-                upload_with_retry() {
+                retry() {
                   status=-1
                   # This is _really_ flakey.
                   max_try=12
                   wait_sec=2
 
-                  echo "Uploading $@"
+                  echo "Executing: $@"
 
                   for run in $(seq 1 $max_try); do
                     status=0
-                    oras push --no-tty --registry-config "$HOME/.docker/config.json" "$@"
+                    "$@"
                     status=$?
                     if [ "$status" -eq 0 ]; then
                       break
@@ -673,6 +672,8 @@ spec:
 
                 SUFFIX=clamav
 
+                cd log
+
                 for UPLOAD_FILE in $(find . -name "clamscan-result*.log"); do
                   MEDIA_TYPE=text/vnd.clamav
                   args+=("${UPLOAD_FILE}:${MEDIA_TYPE}")
@@ -681,7 +682,7 @@ spec:
                   MEDIA_TYPE=application/vnd.konflux.test_output+json
                   args+=("${UPLOAD_FILE}:${MEDIA_TYPE}")
                 done
-                upload_with_retry "${REPO}:${DIGEST}.${SUFFIX}" "${args[@]}"
+                retry oras push --no-tty --registry-config "$HOME/.docker/config.json" "${REPO}:${DIGEST}.${SUFFIX}" "${args[@]}"
           volumes:
             - emptydir: {}
               name: dbfolder

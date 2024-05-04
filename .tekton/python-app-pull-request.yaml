@@ -428,7 +428,7 @@ spec:
                 - name: IMAGE_DIGEST
                   value: $(params.image-digest)
               image: quay.io/konflux-ci/oras:latest@sha256:a7241f49c4ebbeda4dd700db61f86714d7881200614e82b077abe39979eebdca
-              name: upload-sarif
+              name: upload
               workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
               script: |
                 #!/usr/bin/env bash
@@ -634,7 +634,7 @@ spec:
                 - name: IMAGE_DIGEST
                   value: $(params.image-digest)
               image: quay.io/konflux-ci/oras:latest@sha256:a7241f49c4ebbeda4dd700db61f86714d7881200614e82b077abe39979eebdca
-              name: upload-clamav
+              name: upload
               volumeMounts:
                 - mountPath: /work
                   name: work

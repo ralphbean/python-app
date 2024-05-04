@@ -427,8 +427,7 @@ spec:
                   value: $(params.image-url)
                 - name: IMAGE_DIGEST
                   value: $(params.image-digest)
-              # TODO - replace this with oras image
-              image: quay.io/rbean/testing:hacbs-test
+              image: quay.io/konflux-ci/oras:latest@sha256:e0a4c33be7e5ac8f7b36adfd2bd69706d5a0f70fad4ba1367f4a11868f75a2f9
               name: upload-sarif
               workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
               script: |

@@ -367,6 +367,8 @@ spec:
           results:
             - description: Tekton task test output.
               name: TEST_OUTPUT
+            - description: OCI pullspec where the full SARIF result can be found.
+              name: RESULT_URI
           steps:
             - env:
                 - name: SNYK_SECRET
@@ -441,9 +443,10 @@ spec:
                 IFS=':' read -ra REPO <<< "$IMAGE_URL"
                 REPO="${REPO[0]}"
                 DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
+                RESULT_URI="${REPO}:${DIGEST}.${SUFFIX}"
 
-                retry oras push --no-tty --registry-config "$HOME/.docker/config.json" "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
-
+                retry oras push --no-tty --registry-config "$HOME/.docker/config.json" "${RESULT_URI}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
+                echo "${RESULT_URI}" > $(results.RESULT_URI.path)
           volumes:
             - name: snyk-secret
               secret:
@@ -477,6 +480,8 @@ spec:
           results:
             - description: Tekton task test output.
               name: TEST_OUTPUT
+            - description: OCI pullspec where the full clamav output can be found.
+              name: RESULT_URI
             - description: Images processed in the task.
               name: IMAGES_PROCESSED
           sidecars:
@@ -622,8 +627,8 @@ spec:
                 IFS=':' read -ra REPO <<< "$IMAGE_URL"
                 REPO="${REPO[0]}"
                 DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
-
                 SUFFIX=clamav
+                RESULT_URI="${REPO}:${DIGEST}.${SUFFIX}"
 
                 cd log
 
@@ -635,7 +640,8 @@ spec:
                   MEDIA_TYPE=application/vnd.konflux.test_output+json
                   args+=("${UPLOAD_FILE}:${MEDIA_TYPE}")
                 done
-                retry oras push --no-tty --registry-config "$HOME/.docker/config.json" "${REPO}:${DIGEST}.${SUFFIX}" "${args[@]}"
+                retry oras push --no-tty --registry-config "$HOME/.docker/config.json" "${RESULT_URI}" "${args[@]}"
+                echo "${RESULT_URI}" > $(results.RESULT_URI.path)
           volumes:
             - emptydir: {}
               name: dbfolder

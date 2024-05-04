@@ -434,12 +434,11 @@ spec:
                 #!/usr/bin/env bash
 
                 UPLOAD_FILE=sast_snyk_check_out.json
-                OCI_SUBJECT=$IMAGE_URL
 
                 SUFFIX=sarif
                 MEDIA_TYPE=application/sarif+json
 
-                IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
+                IFS=':' read -ra REPO <<< "$IMAGE_URL"
                 REPO="${REPO[0]}"
                 DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
 
@@ -620,8 +619,7 @@ spec:
               script: |
                 #!/usr/bin/env bash
 
-                OCI_SUBJECT=$IMAGE_URL
-                IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
+                IFS=':' read -ra REPO <<< "$IMAGE_URL"
                 REPO="${REPO[0]}"
                 DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
 

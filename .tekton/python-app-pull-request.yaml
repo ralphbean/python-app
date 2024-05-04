@@ -642,6 +642,9 @@ spec:
               workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
               script: |
                 #!/usr/bin/env bash
+                
+                pwd
+                ls
 
                 upload_with_retry() {
                   status=-1

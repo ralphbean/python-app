@@ -639,19 +639,9 @@ spec:
               volumeMounts:
                 - mountPath: /work
                   name: work
-              workingDir: /work
+              workingDir: /work/log
               script: |
                 #!/usr/bin/env bash
-                pwd
-                ls
-                echo $HOME
-                ls -alh $HOME
-                ls /work/log/
-                echo ---
-                find log
-                echo ---
-                find log -name "clamscan*.log"
-                echo ---
 
                 upload_with_retry() {
                   status=-1
@@ -682,11 +672,16 @@ spec:
                 DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
 
                 SUFFIX=clamav
-                MEDIA_TYPE=text/clamav+plain
 
-                for UPLOAD_FILE in $(find log/ -name "clamscan*.log"); do
-                  upload_with_retry "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
+                for UPLOAD_FILE in $(find . -name "clamscan-result*.log"); do
+                  MEDIA_TYPE=text/vnd.clamav
+                  args+=("${UPLOAD_FILE}:${MEDIA_TYPE}")
                 done
+                for UPLOAD_FILE in $(find . -name "clamscan-ec-test*.json"); do
+                  MEDIA_TYPE=application/vnd.konflux.test_output+json
+                  args+=("${UPLOAD_FILE}:${MEDIA_TYPE}")
+                done
+                upload_with_retry "${REPO}:${DIGEST}.${SUFFIX}" "${args[@]}"
           volumes:
             - emptydir: {}
               name: dbfolder

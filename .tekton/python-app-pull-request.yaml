@@ -631,15 +631,12 @@ spec:
                   value: $(params.image-url)
                 - name: IMAGE_DIGEST
                   value: $(params.image-digest)
-              securityContext:
-                runAsUser: 1000
+              image: quay.io/konflux-ci/oras:latest@sha256:a7241f49c4ebbeda4dd700db61f86714d7881200614e82b077abe39979eebdca
+              name: upload-clamav
               volumeMounts:
                 - mountPath: /work
                   name: work
               workingDir: /work
-              image: quay.io/konflux-ci/oras:latest@sha256:a7241f49c4ebbeda4dd700db61f86714d7881200614e82b077abe39979eebdca
-              name: upload-clamav
-              workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
               script: |
                 #!/usr/bin/env bash
                 

@@ -439,6 +439,8 @@ spec:
                   max_try=12
                   wait_sec=2
 
+                  echo "Uploading $@"
+
                   for run in $(seq 1 $max_try); do
                     status=0
                     oras push --no-tty --registry-config "$HOME/.docker/config.json" "$@"
@@ -549,6 +551,7 @@ spec:
 
                 images_processed_template='{"image": {"pullspec": "'"$IMAGE_URL"'", "digests": [%s]}}'
                 digests_processed=()
+                mkdir log
                 mkdir content
                 cd content
                 echo "Extracting image(s)."
@@ -576,30 +579,30 @@ spec:
                       --pcre-max-filesize=4095M --alert-exceeds-max=yes \
                       --alert-encrypted=yes --alert-encrypted-archive=yes --alert-encrypted-doc=yes --alert-macros=yes \
                       --alert-phishing-ssl=yes --alert-phishing-cloak=yes --alert-partition-intersection=yes \
-                      | tee /tekton/home/clamscan-result-$arch.log || true
-                    echo "Executed-on: Scan was executed on version - $(clamscan --version)" | tee -a /tekton/home/clamscan-result-$arch.log
+                      | tee /work/log/clamscan-result-$arch.log || true
+                    echo "Executed-on: Scan was executed on version - $(clamscan --version)" | tee -a /work/log/clamscan-result-$arch.log
 
                     digests_processed+=("\"$arch_sha\"")
 
-                    if [[ -e "/tekton/home/clamscan-result-$arch.log" ]]; then
+                    if [[ -e "/work/log/clamscan-result-$arch.log" ]]; then
                       # file_suffix=$(basename "$file" | sed 's/clamscan-result-//;s/.log//')
                       # OPA/EC requires structured data input, add clamAV log into json
-                      jq -Rs '{ output: . }' /tekton/home/clamscan-result-$arch.log > /tekton/home/clamscan-result-log-$arch.json
+                      jq -Rs '{ output: . }' /work/log/clamscan-result-$arch.log > /work/log/clamscan-result-log-$arch.json
 
                       EC_EXPERIMENTAL=1 ec test \
                         --namespace required_checks \
                         --policy /project/clamav/virus-check.rego \
                         -o json \
-                        /tekton/home/clamscan-result-log-$arch.json || true
+                        /work/log/clamscan-result-log-$arch.json || true
 
                       # workaround: due to a bug in ec-cli, we cannot generate json and appstudio output at the same time, running it again
                       EC_EXPERIMENTAL=1 ec test \
                         --namespace required_checks \
                         --policy /project/clamav/virus-check.rego \
                         -o appstudio \
-                        /tekton/home/clamscan-result-log-$arch.json | tee /tekton/home/clamscan-ec-test-$arch.json || true
+                        /work/log/clamscan-result-log-$arch.json | tee /work/log/clamscan-ec-test-$arch.json || true
 
-                      cat /tekton/home/clamscan-ec-test-$arch.json
+                      cat /work/log/clamscan-ec-test-$arch.json
                     fi
                   done < <(echo "$image_manifests" | jq -r 'to_entries[] | "\(.key) \(.value)"')
                 fi
@@ -614,7 +617,7 @@ spec:
                     "warnings" : (.warnings + $item.warnings),
                     "result" : (if .result == "" or ($item.result == "SKIPPED" and .result == "SUCCESS") or ($item.result == "WARNING" and (.result == "SUCCESS" or .result == "SKIPPED")) or ($item.result == "FAILURE" and .result != "ERROR") or $item.result == "ERROR" then $item.result else .result end),
                     "note" : (if .result == "" or ($item.result == "SKIPPED" and .result == "SUCCESS") or ($item.result == "WARNING" and (.result == "SUCCESS" or .result == "SKIPPED")) or ($item.result == "FAILURE" and .result != "ERROR") or $item.result == "ERROR" then $item.note else .note end)
-                    })' /tekton/home/clamscan-ec-test-*.json | tee $(results.TEST_OUTPUT.path)
+                    })' /work/log/clamscan-ec-test-*.json | tee $(results.TEST_OUTPUT.path)
 
                 digests_processed_string=$(IFS=,; echo "${digests_processed[*]}")
                 echo "${images_processed_template/\[%s]/[$digests_processed_string]}" | tee $(results.IMAGES_PROCESSED.path)
@@ -639,16 +642,24 @@ spec:
               workingDir: /work
               script: |
                 #!/usr/bin/env bash
-                
                 pwd
                 ls
-                ls /home/tekton
+                echo $HOME
+                ls -alh $HOME
+                ls /work/log/
+                echo ---
+                find log
+                echo ---
+                find log -name "clamscan*.log"
+                echo ---
 
                 upload_with_retry() {
                   status=-1
                   # This is _really_ flakey.
                   max_try=12
                   wait_sec=2
+
+                  echo "Uploading $@"
 
                   for run in $(seq 1 $max_try); do
                     status=0
@@ -665,17 +676,15 @@ spec:
                   fi
                 }
 
-                for filename in /tekton/home/clamscan-result-*.log; do
-                  UPLOAD_FILE=$filename
-                  OCI_SUBJECT=$IMAGE_URL
+                OCI_SUBJECT=$IMAGE_URL
+                IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
+                REPO="${REPO[0]}"
+                DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
 
-                  SUFFIX=clamav
-                  MEDIA_TYPE=text/clamav+plain
+                SUFFIX=clamav
+                MEDIA_TYPE=text/clamav+plain
 
-                  IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
-                  REPO="${REPO[0]}"
-                  DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
-
+                for UPLOAD_FILE in $(find log/ -name "clamscan*.log"); do
                   upload_with_retry "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
                 done
           volumes:

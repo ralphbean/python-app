@@ -642,6 +642,7 @@ spec:
                 
                 pwd
                 ls
+                ls /home/tekton
 
                 upload_with_retry() {
                   status=-1

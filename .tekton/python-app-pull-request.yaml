@@ -626,6 +626,57 @@ spec:
                 - mountPath: /work
                   name: work
               workingDir: /work
+            - env:
+                - name: IMAGE_URL
+                  value: $(params.image-url)
+                - name: IMAGE_DIGEST
+                  value: $(params.image-digest)
+              securityContext:
+                runAsUser: 1000
+              volumeMounts:
+                - mountPath: /work
+                  name: work
+              workingDir: /work
+              image: quay.io/konflux-ci/oras:latest@sha256:a7241f49c4ebbeda4dd700db61f86714d7881200614e82b077abe39979eebdca
+              name: upload-clamav
+              workingDir: $(workspaces.workspace.path)/hacbs/$(context.task.name)
+              script: |
+                #!/usr/bin/env bash
+
+                upload_with_retry() {
+                  status=-1
+                  # This is _really_ flakey.
+                  max_try=12
+                  wait_sec=2
+
+                  for run in $(seq 1 $max_try); do
+                    status=0
+                    oras push --no-tty --registry-config "$HOME/.docker/config.json" "$@"
+                    status=$?
+                    if [ "$status" -eq 0 ]; then
+                      break
+                    fi
+                    sleep $wait_sec
+                  done
+                  if [ "$status" -ne 0 ]; then
+                    echo "Failed to upload $@ after ${max_try} tries" >&2
+                    cat err >&2
+                  fi
+                }
+
+                for filename in /tekton/home/clamscan-result-*.log; do
+                  UPLOAD_FILE=$filename
+                  OCI_SUBJECT=$IMAGE_URL
+
+                  SUFFIX=clamav
+                  MEDIA_TYPE=text/clamav+plain
+
+                  IFS=':' read -ra REPO <<< "$OCI_SUBJECT"
+                  REPO="${REPO[0]}"
+                  DIGEST=$(echo "${IMAGE_DIGEST}" | tr : -)
+
+                  upload_with_retry "${REPO}:${DIGEST}.${SUFFIX}" "${UPLOAD_FILE}:${MEDIA_TYPE}"
+                done
           volumes:
             - emptydir: {}
               name: dbfolder

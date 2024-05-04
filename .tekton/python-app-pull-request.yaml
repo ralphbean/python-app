@@ -433,16 +433,7 @@ spec:
               script: |
                 #!/usr/bin/env bash
 
-                echo "$HOME/.docker/config.json"
-                echo "---"
-                echo
-                cat "$HOME/.docker/config.json"
-                echo
-                echo "---"
-
-
                 upload_with_retry() {
-
                   status=-1
                   # This is _really_ flakey.
                   max_try=12

@@ -6,6 +6,7 @@ ARG TARGET_ARCH=''
 ARG KERNEL_VERSION=''
 ARG REDHAT_VERSION='el9'
 RUN ls -alhZ /tmp
+RUN ls -alhZ /var/cache/dnf/
 RUN . /etc/os-release \
     && export OS_VERSION_MAJOR="${OS_VERSION_MAJOR:-$(echo ${VERSION} | cut -d'.' -f 1)}" \
     && export TARGET_ARCH="${TARGET_ARCH:-$(arch)}" \

@@ -5,17 +5,10 @@ ARG DRIVER_VERSION=1.15.1-15
 ARG TARGET_ARCH=''
 ARG KERNEL_VERSION=''
 ARG REDHAT_VERSION='el9'
-# Workaround? for dnf temp dir permission issue in bootc images
-RUN echo "cachedir=/tmp/dnf-cache" >> /etc/dnf/dnf.conf \
-    && mkdir -p /tmp/dnf-cache && chown root:root /tmp/dnf-cache && chmod 755 /tmp/dnf-cache
 RUN . /etc/os-release \
     && export OS_VERSION_MAJOR="${OS_VERSION_MAJOR:-$(echo ${VERSION} | cut -d'.' -f 1)}" \
     && export TARGET_ARCH="${TARGET_ARCH:-$(arch)}" \
     && dnf -y update && dnf -y install kernel-headers${KERNEL_VERSION:+-}${KERNEL_VERSION} make git kmod
-RUN ls -lZd /tmp
-RUN cat /proc/self/attr/current
-RUN touch /tmp/libdnf.mytest
-RUN ls -lZ /tmp/libdnf.mytest
 RUN if grep -q -i "centos" /etc/os-release; then \
         echo "CentOS detected" &&  \
         dnf -y install 'dnf-command(config-manager)' && \

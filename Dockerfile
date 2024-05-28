@@ -1,4 +1,4 @@
-ARG BASEIMAGE="registry.redhat.io/ubi9/ubi:latest"
+ARG BASEIMAGE="quay.io/centos-bootc/centos-bootc:stream9"
 FROM ${BASEIMAGE}
 ARG OS_VERSION_MAJOR=''
 ARG DRIVER_VERSION=1.15.1-15

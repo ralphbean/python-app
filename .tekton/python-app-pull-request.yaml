@@ -18,16 +18,16 @@ metadata:
   namespace: ralphjbean-tenant
 spec:
   params:
-  - name: dockerfile
-    value: Dockerfile
   - name: git-url
     value: '{{source_url}}'
-  - name: image-expires-after
-    value: 5d
-  - name: output-image
-    value: quay.io/redhat-user-workloads/ralphjbean-tenant/demo/python-app:on-pr-{{revision}}
   - name: revision
     value: '{{revision}}'
+  - name: output-image
+    value: quay.io/redhat-user-workloads/ralphjbean-tenant/demo/python-app:on-pr-{{revision}}
+  - name: image-expires-after
+    value: 5d
+  - name: dockerfile
+    value: Dockerfile
   pipelineSpec:
     finally:
     - name: show-sbom
